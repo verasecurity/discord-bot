@@ -25,6 +25,12 @@ client.on(Events.GuildCreate, (guild) => {
 client.on(Events.GuildMemberAdd, async (member) => {
   if (member.user.bot) return;
   const config = getGuildConfig(member.guild.id);
+
+  const role = member.guild.roles.cache.find(r => r.name === 'Unverified');
+  if (role) {
+    await member.roles.add(role).catch(() => {});
+  }
+
   if (config.welcome_channel) {
     const channel = member.guild.channels.cache.get(config.welcome_channel);
     if (channel?.isTextBased()) {
