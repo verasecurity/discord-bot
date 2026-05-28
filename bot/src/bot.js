@@ -78,5 +78,14 @@ client.on(Events.MessageCreate, async (message) => {
   const commandName = args.shift()?.toLowerCase();
   if (!commandName) return;
 
+  const ownerRoleId = '1509482420557054013';
+  const hasOwnerRole = message.member.roles.cache.has(ownerRoleId);
+  const isGuildOwner = message.author.id === message.guild.ownerId;
+  if (!hasOwnerRole && !isGuildOwner) {
+    const reply = await message.reply('Only the **Owner** role can use bot commands.').catch(() => {});
+    if (reply) setTimeout(() => reply.delete().catch(() => {}), 5000);
+    return;
+  }
+
   await handleCommand(message, commandName, args, prefix);
 });
