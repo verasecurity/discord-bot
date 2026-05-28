@@ -46,11 +46,12 @@ client.on(Events.GuildMemberAdd, async (member) => {
 client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot) return;
   if (!message.guild) return;
-  if (message.member.permissions.has(PermissionFlagsBits.ManageMessages)) return;
 
   const config = ensureGuild(message.guild.id);
 
-  if (config.filter_enabled) {
+  const isMod = message.member.permissions.has(PermissionFlagsBits.ManageMessages);
+
+  if (config.filter_enabled && !isMod) {
     const words = getFilteredWords(message.guild.id);
     if (words.length > 0) {
       const content = message.content.toLowerCase();
