@@ -36,6 +36,7 @@ const builtInCommands = {
   close: { run: close, description: 'Close the current ticket', usage: 'close' },
   filter: { run: filterCommand, description: 'Manage the word filter', usage: 'filter <add|remove|list|toggle>' },
   help: { run: helpCommand, description: 'Show this help', usage: 'help [command]' },
+  cmds: { run: helpCommand, description: 'List all commands', usage: 'cmds' },
 };
 
 export async function handleCommand(message, commandName, args, prefix) {
