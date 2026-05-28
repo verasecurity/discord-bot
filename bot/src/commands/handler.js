@@ -12,6 +12,7 @@ import { lock } from './lock.js';
 import { unlock } from './unlock.js';
 import { slowmode } from './slowmode.js';
 import { ticket, add, remove, close } from './ticket.js';
+import { filterCommand } from './filter.js';
 import { handleCustomCommand } from './custom.js';
 import { getGuildConfig } from '../db.js';
 
@@ -33,6 +34,7 @@ const builtInCommands = {
   add: { run: add, description: 'Add a user to ticket', usage: 'add @user' },
   remove: { run: remove, description: 'Remove a user from ticket', usage: 'remove @user' },
   close: { run: close, description: 'Close the current ticket', usage: 'close' },
+  filter: { run: filterCommand, description: 'Manage the word filter', usage: 'filter <add|remove|list|toggle>' },
   help: { run: helpCommand, description: 'Show this help', usage: 'help [command]' },
 };
 

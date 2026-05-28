@@ -21,6 +21,7 @@ db.exec(`
     welcome_message TEXT DEFAULT 'Welcome {user} to {server}!',
     mute_role TEXT,
     ticket_category TEXT,
+    filter_enabled INTEGER DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
   );
 
@@ -76,20 +77,29 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS filtered_words (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    word TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE
+  );
 `);
 
 const stmts = {
   getGuild: db.prepare('SELECT * FROM guilds WHERE id = ?'),
   upsertGuild: db.prepare(`
-    INSERT INTO guilds (id, prefix, mod_log_channel, welcome_channel, welcome_message, mute_role, ticket_category)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO guilds (id, prefix, mod_log_channel, welcome_channel, welcome_message, mute_role, ticket_category, filter_enabled)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       prefix = COALESCE(EXCLUDED.prefix, guilds.prefix),
       mod_log_channel = COALESCE(EXCLUDED.mod_log_channel, guilds.mod_log_channel),
       welcome_channel = COALESCE(EXCLUDED.welcome_channel, guilds.welcome_channel),
       welcome_message = COALESCE(EXCLUDED.welcome_message, guilds.welcome_message),
       mute_role = COALESCE(EXCLUDED.mute_role, guilds.mute_role),
-      ticket_category = COALESCE(EXCLUDED.ticket_category, guilds.ticket_category)
+      ticket_category = COALESCE(EXCLUDED.ticket_category, guilds.ticket_category),
+      filter_enabled = COALESCE(EXCLUDED.filter_enabled, guilds.filter_enabled)
   `),
   getCommands: db.prepare('SELECT * FROM custom_commands WHERE guild_id = ? AND enabled = 1'),
   getAllCommands: db.prepare('SELECT * FROM custom_commands WHERE guild_id = ?'),
@@ -107,6 +117,10 @@ const stmts = {
   closeTicket: db.prepare("UPDATE tickets SET status = 'closed' WHERE channel_id = ?"),
   getOpenTicket: db.prepare("SELECT * FROM tickets WHERE guild_id = ? AND channel_id = ? AND status = 'open'"),
   getTickets: db.prepare('SELECT * FROM tickets WHERE guild_id = ? ORDER BY created_at DESC'),
+  getFilteredWords: db.prepare('SELECT * FROM filtered_words WHERE guild_id = ?'),
+  getFilteredWord: db.prepare('SELECT * FROM filtered_words WHERE guild_id = ? AND LOWER(word) = LOWER(?)'),
+  addFilteredWord: db.prepare('INSERT OR IGNORE INTO filtered_words (guild_id, word) VALUES (?, LOWER(?))'),
+  removeFilteredWord: db.prepare('DELETE FROM filtered_words WHERE guild_id = ? AND LOWER(word) = LOWER(?)'),
   addLog: db.prepare('INSERT INTO moderation_logs (guild_id, action, user_id, moderator_id, reason) VALUES (?, ?, ?, ?, ?)'),
   getLogs: db.prepare('SELECT * FROM moderation_logs WHERE guild_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?'),
   getLogsCount: db.prepare('SELECT COUNT(*) as count FROM moderation_logs WHERE guild_id = ?'),
@@ -115,8 +129,8 @@ const stmts = {
 export function ensureGuild(guildId) {
   const existing = stmts.getGuild.get(guildId);
   if (!existing) {
-    stmts.upsertGuild.run(guildId, '$', null, null, null, null, null);
-    return { id: guildId, prefix: '$', mod_log_channel: null, welcome_channel: null, welcome_message: null, mute_role: null, ticket_category: null };
+    stmts.upsertGuild.run(guildId, '$', null, null, null, null, null, 1);
+    return { id: guildId, prefix: '$', mod_log_channel: null, welcome_channel: null, welcome_message: null, mute_role: null, ticket_category: null, filter_enabled: 1 };
   }
   return existing;
 }
@@ -194,9 +208,22 @@ export function updateGuildConfig(guildId, config) {
     config.welcome_channel ?? existing.welcome_channel,
     config.welcome_message ?? existing.welcome_message,
     config.mute_role ?? existing.mute_role,
-    config.ticket_category ?? existing.ticket_category
+    config.ticket_category ?? existing.ticket_category,
+    config.filter_enabled ?? existing.filter_enabled
   );
   return getGuildConfig(guildId);
+}
+
+export function getFilteredWords(guildId) {
+  return stmts.getFilteredWords.all(guildId).map(r => r.word);
+}
+
+export function addFilteredWord(guildId, word) {
+  stmts.addFilteredWord.run(guildId, word);
+}
+
+export function removeFilteredWord(guildId, word) {
+  stmts.removeFilteredWord.run(guildId, word);
 }
 
 export function createTicket(guildId, channelId, creatorId) {

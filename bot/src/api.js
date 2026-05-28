@@ -4,6 +4,7 @@ import {
   getGuildConfig, updateGuildConfig,
   getCommands, createCommand, updateCommand, deleteCommand,
   getLogs, getLogsCount, getWarnings, getMutes, getTickets,
+  getFilteredWords, addFilteredWord, removeFilteredWord,
 } from './db.js';
 
 export function createAPI(app) {
@@ -122,5 +123,27 @@ export function createAPI(app) {
     const guild = client.guilds.cache.get(req.params.id);
     if (!guild) return res.status(404).json({ error: 'Guild not found' });
     res.json(getTickets(guild.id));
+  });
+
+  app.get('/api/guilds/:id/filter', (req, res) => {
+    const guild = client.guilds.cache.get(req.params.id);
+    if (!guild) return res.status(404).json({ error: 'Guild not found' });
+    res.json({ words: getFilteredWords(guild.id), enabled: getGuildConfig(guild.id).filter_enabled });
+  });
+
+  app.post('/api/guilds/:id/filter', (req, res) => {
+    const guild = client.guilds.cache.get(req.params.id);
+    if (!guild) return res.status(404).json({ error: 'Guild not found' });
+    const { word } = req.body;
+    if (!word) return res.status(400).json({ error: 'Word required' });
+    addFilteredWord(guild.id, word);
+    res.json({ words: getFilteredWords(guild.id) });
+  });
+
+  app.delete('/api/guilds/:id/filter/:word', (req, res) => {
+    const guild = client.guilds.cache.get(req.params.id);
+    if (!guild) return res.status(404).json({ error: 'Guild not found' });
+    removeFilteredWord(guild.id, req.params.word);
+    res.json({ words: getFilteredWords(guild.id) });
   });
 }

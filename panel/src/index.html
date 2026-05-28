@@ -34,6 +34,7 @@
           <li onclick="showPage('commands')">Custom Commands</li>
           <li onclick="showPage('logs')">Moderation Logs</li>
           <li onclick="showPage('tickets')">Tickets</li>
+          <li onclick="showPage('filter')">Word Filter</li>
           <li onclick="showPage('config')">Configuration</li>
           <li onclick="showPage('invite')">Invite Bot</li>
         </ul>
@@ -98,6 +99,21 @@
           <table>
             <thead><tr><th>Channel</th><th>Creator</th><th>Status</th><th>Created</th></tr></thead>
             <tbody id="tickets-body"></tbody>
+          </table>
+        </div>
+
+        <div id="page-filter" class="page">
+          <h2>Word Filter</h2>
+          <select id="filter-guild-select" onchange="loadFilter()"></select>
+          <div class="filter-controls">
+            <input type="text" id="filter-word-input" placeholder="Add a word to filter">
+            <button onclick="addFilterWord()">Add Word</button>
+            <button onclick="toggleFilter()" id="filter-toggle-btn">Toggle</button>
+          </div>
+          <p>Filter status: <span id="filter-status">Loading...</span></p>
+          <table>
+            <thead><tr><th>Word</th><th>Actions</th></tr></thead>
+            <tbody id="filter-words-body"></tbody>
           </table>
         </div>
 

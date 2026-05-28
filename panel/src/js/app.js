@@ -78,7 +78,7 @@ async function loadOverview() {
 async function loadGuildSelects() {
   try {
     const guilds = await apiGet('/guilds');
-    const selects = ['cmd-guild-select', 'log-guild-select', 'config-guild-select', 'ticket-guild-select'];
+    const selects = ['cmd-guild-select', 'log-guild-select', 'config-guild-select', 'ticket-guild-select', 'filter-guild-select'];
     selects.forEach(id => {
       const sel = document.getElementById(id);
       sel.innerHTML = guilds.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
@@ -96,6 +96,7 @@ function showPage(page) {
   if (page === 'commands') loadCommands();
   if (page === 'logs') loadLogs();
   if (page === 'tickets') loadTickets();
+  if (page === 'filter') loadFilter();
   if (page === 'config') loadConfig();
   if (page === 'overview') loadOverview();
 }
@@ -272,4 +273,48 @@ async function loadInviteLink() {
     document.getElementById('invite-link').href = data.url;
     document.getElementById('invite-link').textContent = data.url;
   } catch {}
+}
+
+async function loadFilter() {
+  const guildId = document.getElementById('filter-guild-select').value;
+  if (!guildId) return;
+  try {
+    const data = await apiGet(`/guilds/${guildId}/filter`);
+    document.getElementById('filter-status').textContent = data.enabled ? 'Enabled' : 'Disabled';
+    document.getElementById('filter-status').style.color = data.enabled ? '#2ecc71' : '#e74c3c';
+    document.getElementById('filter-words-body').innerHTML = data.words.map(w => `
+      <tr>
+        <td>${w}</td>
+        <td><button onclick="removeFilterWord('${w}')" class="btn-danger">Remove</button></td>
+      </tr>
+    `).join('');
+  } catch {}
+}
+
+async function addFilterWord() {
+  const guildId = document.getElementById('filter-guild-select').value;
+  const word = document.getElementById('filter-word-input').value.trim();
+  if (!word) return alert('Enter a word');
+  try {
+    await apiPost(`/guilds/${guildId}/filter`, { word });
+    document.getElementById('filter-word-input').value = '';
+    loadFilter();
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function removeFilterWord(word) {
+  const guildId = document.getElementById('filter-guild-select').value;
+  try {
+    await apiDelete(`/guilds/${guildId}/filter/${encodeURIComponent(word)}`);
+    loadFilter();
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function toggleFilter() {
+  const guildId = document.getElementById('filter-guild-select').value;
+  try {
+    const cfg = await apiGet(`/guilds/${guildId}/config`);
+    await apiPut(`/guilds/${guildId}/config`, { filter_enabled: cfg.filter_enabled ? 0 : 1 });
+    loadFilter();
+  } catch (e) { alert('Error: ' + e.message); }
 }
