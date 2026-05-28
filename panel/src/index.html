@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bot Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="login-screen">
+    <div class="login-box">
+      <h1>Bot Dashboard</h1>
+      <p>Enter your API key to manage the bot</p>
+      <input type="password" id="api-key-input" placeholder="API Key">
+      <button onclick="login()">Connect</button>
+      <p id="login-error" class="error"></p>
+    </div>
+  </div>
+
+  <div id="app" style="display:none">
+    <nav>
+      <h2>Bot Dashboard</h2>
+      <div class="nav-info">
+        <span id="status-badge" class="badge">Offline</span>
+        <button onclick="logout()" class="btn-sm">Logout</button>
+      </div>
+    </nav>
+
+    <div class="container">
+      <aside>
+        <ul>
+          <li class="active" onclick="showPage('overview')">Overview</li>
+          <li onclick="showPage('guilds')">Servers</li>
+          <li onclick="showPage('commands')">Custom Commands</li>
+          <li onclick="showPage('logs')">Moderation Logs</li>
+          <li onclick="showPage('tickets')">Tickets</li>
+          <li onclick="showPage('config')">Configuration</li>
+          <li onclick="showPage('invite')">Invite Bot</li>
+        </ul>
+      </aside>
+
+      <main>
+        <div id="page-overview" class="page active">
+          <h2>Overview</h2>
+          <div class="stats-grid">
+            <div class="stat-card"><h3>Servers</h3><p id="stat-guilds">0</p></div>
+            <div class="stat-card"><h3>Users</h3><p id="stat-users">0</p></div>
+            <div class="stat-card"><h3>Ping</h3><p id="stat-ping">0ms</p></div>
+            <div class="stat-card"><h3>Uptime</h3><p id="stat-uptime">0s</p></div>
+          </div>
+        </div>
+
+        <div id="page-guilds" class="page">
+          <h2>Servers</h2>
+          <div id="guild-list"></div>
+          <div id="guild-detail" style="display:none">
+            <button onclick="backToGuilds()" class="btn-sm">&larr; Back</button>
+            <div id="guild-info"></div>
+          </div>
+        </div>
+
+        <div id="page-commands" class="page">
+          <h2>Custom Commands</h2>
+          <div id="command-controls">
+            <select id="cmd-guild-select" onchange="loadCommands()"></select>
+            <button onclick="showAddCommand()">+ Add Command</button>
+          </div>
+          <div id="command-form" style="display:none">
+            <h3 id="cmd-form-title">Add Command</h3>
+            <input type="hidden" id="cmd-edit-id">
+            <input type="text" id="cmd-trigger" placeholder="Trigger (without prefix)">
+            <input type="text" id="cmd-response" placeholder="Response text">
+            <small>Placeholders: {user}, {username}, {server}, {channel}, {args}</small>
+            <div class="form-row">
+              <button onclick="saveCommand()">Save</button>
+              <button onclick="cancelCommandForm()" class="btn-sm">Cancel</button>
+            </div>
+          </div>
+          <table id="commands-table">
+            <thead><tr><th>Trigger</th><th>Response</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="commands-body"></tbody>
+          </table>
+        </div>
+
+        <div id="page-logs" class="page">
+          <h2>Moderation Logs</h2>
+          <select id="log-guild-select" onchange="loadLogs()"></select>
+          <table>
+            <thead><tr><th>Action</th><th>User</th><th>Moderator</th><th>Reason</th><th>Date</th></tr></thead>
+            <tbody id="logs-body"></tbody>
+          </table>
+          <div id="logs-pagination"></div>
+        </div>
+
+        <div id="page-tickets" class="page">
+          <h2>Tickets</h2>
+          <select id="ticket-guild-select" onchange="loadTickets()"></select>
+          <table>
+            <thead><tr><th>Channel</th><th>Creator</th><th>Status</th><th>Created</th></tr></thead>
+            <tbody id="tickets-body"></tbody>
+          </table>
+        </div>
+
+        <div id="page-config" class="page">
+          <h2>Server Configuration</h2>
+          <select id="config-guild-select" onchange="loadConfig()"></select>
+          <div id="config-form">
+            <label>Prefix</label>
+            <input type="text" id="config-prefix">
+            <label>Mod Log Channel ID</label>
+            <input type="text" id="config-mod-log">
+            <label>Mute Role ID</label>
+            <input type="text" id="config-mute-role">
+            <label>Welcome Channel ID</label>
+            <input type="text" id="config-welcome-channel">
+            <label>Welcome Message</label>
+            <input type="text" id="config-welcome-msg">
+            <label>Ticket Category ID</label>
+            <input type="text" id="config-ticket-category" placeholder="Category ID for ticket channels">
+            <button onclick="saveConfig()">Save Config</button>
+          </div>
+        </div>
+
+        <div id="page-invite" class="page">
+          <h2>Invite Bot</h2>
+          <p>Use the link below to invite the bot to your server:</p>
+          <a id="invite-link" href="#" target="_blank">Generate Invite Link</a>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
