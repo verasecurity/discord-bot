@@ -22,6 +22,7 @@ db.exec(`
     mute_role TEXT,
     ticket_category TEXT,
     filter_enabled INTEGER DEFAULT 1,
+    auto_role_enabled INTEGER DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
   );
 
@@ -90,8 +91,8 @@ db.exec(`
 const stmts = {
   getGuild: db.prepare('SELECT * FROM guilds WHERE id = ?'),
   upsertGuild: db.prepare(`
-    INSERT INTO guilds (id, prefix, mod_log_channel, welcome_channel, welcome_message, mute_role, ticket_category, filter_enabled)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO guilds (id, prefix, mod_log_channel, welcome_channel, welcome_message, mute_role, ticket_category, filter_enabled, auto_role_enabled)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       prefix = COALESCE(EXCLUDED.prefix, guilds.prefix),
       mod_log_channel = COALESCE(EXCLUDED.mod_log_channel, guilds.mod_log_channel),
@@ -99,7 +100,8 @@ const stmts = {
       welcome_message = COALESCE(EXCLUDED.welcome_message, guilds.welcome_message),
       mute_role = COALESCE(EXCLUDED.mute_role, guilds.mute_role),
       ticket_category = COALESCE(EXCLUDED.ticket_category, guilds.ticket_category),
-      filter_enabled = COALESCE(EXCLUDED.filter_enabled, guilds.filter_enabled)
+      filter_enabled = COALESCE(EXCLUDED.filter_enabled, guilds.filter_enabled),
+      auto_role_enabled = COALESCE(EXCLUDED.auto_role_enabled, guilds.auto_role_enabled)
   `),
   getCommands: db.prepare('SELECT * FROM custom_commands WHERE guild_id = ? AND enabled = 1'),
   getAllCommands: db.prepare('SELECT * FROM custom_commands WHERE guild_id = ?'),
@@ -129,8 +131,8 @@ const stmts = {
 export function ensureGuild(guildId) {
   const existing = stmts.getGuild.get(guildId);
   if (!existing) {
-    stmts.upsertGuild.run(guildId, '$', null, null, null, null, null, 1);
-    return { id: guildId, prefix: '$', mod_log_channel: null, welcome_channel: null, welcome_message: null, mute_role: null, ticket_category: null, filter_enabled: 1 };
+    stmts.upsertGuild.run(guildId, '$', null, null, null, null, null, 1, 1);
+    return { id: guildId, prefix: '$', mod_log_channel: null, welcome_channel: null, welcome_message: null, mute_role: null, ticket_category: null, filter_enabled: 1, auto_role_enabled: 1 };
   }
   return existing;
 }
@@ -209,7 +211,8 @@ export function updateGuildConfig(guildId, config) {
     config.welcome_message ?? existing.welcome_message,
     config.mute_role ?? existing.mute_role,
     config.ticket_category ?? existing.ticket_category,
-    config.filter_enabled ?? existing.filter_enabled
+    config.filter_enabled ?? existing.filter_enabled,
+    config.auto_role_enabled ?? existing.auto_role_enabled
   );
   return getGuildConfig(guildId);
 }

@@ -26,9 +26,11 @@ client.on(Events.GuildMemberAdd, async (member) => {
   if (member.user.bot) return;
   const config = getGuildConfig(member.guild.id);
 
-  const role = member.guild.roles.cache.find(r => r.name === 'Unverified');
-  if (role) {
-    await member.roles.add(role).catch(() => {});
+  if (config.auto_role_enabled) {
+    const role = member.guild.roles.cache.find(r => r.name === 'Unverified');
+    if (role) {
+      await member.roles.add(role).catch(() => {});
+    }
   }
 
   if (config.welcome_channel) {
