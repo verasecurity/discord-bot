@@ -130,7 +130,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     c => c.name === channelName && c.type === ChannelType.GuildText
   );
   if (existingChannel) {
-    return interaction.editReply({ content: `You already have a ticket: ${existingChannel}`);
+    return interaction.editReply({ content: `You already have a ticket: ${existingChannel}` });
   }
 
   const category = interaction.guild.channels.cache.get(info.categoryId);
