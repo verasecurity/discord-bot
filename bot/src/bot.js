@@ -112,6 +112,47 @@ client.on(Events.MessageCreate, async (message) => {
     }
   }
 
+  if (!isMod) {
+    const content = message.content;
+
+    if (/[\u0300-\u036f\u0489\u061c\u064b-\u065f\u0670\u06d6-\u06dc\u06df-\u06e4\u06e7-\u06e8\u06ea-\u06ed\u0711\u0730-\u074a\u07a6-\u07b0\u0901-\u0903\u093c\u093e-\u094d\u0951-\u0954\u0962-\u0963\u0981-\u0983\u09bc\u09be-\u09cc\u09d7\u09e2-\u09e3\u0a01-\u0a03\u0abc\u0abe-\u0acc\u0b01-\u0b03\u0b3c\u0b3e-\u0b4c\u0b56-\u0b57\u0b62-\u0b63\u0b82\u0bbe-\u0bcc\u0bd7\u0c01-\u0c03\u0c3e-\u0c4c\u0c55-\u0c56\u0c62-\u0c63\u0c82-\u0c83\u0cbc\u0cbe-\u0ccc\u0cd5-\u0cd6\u0ce2-\u0ce3\u0d02-\u0d03\u0d3e-\u0d4c\u0d57\u0d62-\u0d63\u0d82-\u0d83\u0dca\u0dcf-\u0ddf\u0df2-\u0df3\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0eb1\u0eb4-\u0eb9\u0ebb-\u0ebc\u0ec8-\u0ecd\u0f18-\u0f19\u0f35\u0f37\u0f39\u0f71-\u0f7e\u0f80-\u0f84\u0f86-\u0f87\u0f90-\u0fbc\u0fc6\u102b-\u103e\u1056-\u1059\u105e-\x1060\u1062-\x1064\u1067-\x106d\u1071-\x1074\u1082-\x108d\u108f\u109a-\x109d\u1100-\x1159\u115f-\x11a2\u11a8-\x11f9\u1dc0-\x1dff\u20d0-\x20ff\u2cef-\x2cf1\u2de0-\x2dff\u302a-\x302f\u3099-\x309a\ua66f-\ua672\ua67c-\ua67d\ua802\ua806\ua80b\ua823-\ua827\ua880-\ua881\ua8b4-\ua8c4\ua8e0-\ua8f1\ua926-\ua92d\ua947-\ua953\uaa29-\uaa36\uaa43\uaa4c\uaa4d\ua9b3-\ua9c0\uaab0\uaab2-\uaab4\uaab7-\uaab8\uaabe-\uaabf\uaac1\uabe3-\uabea\uabec\uabed\ud7b0-\ud7c6\ud7cb-\ud7fb\ufb1e\ufe00-\ufe0f\ufe20-\ufe23\uff9e-\uff9f]{4,}/.test(content)) {
+      await message.delete().catch(() => {});
+      const warn = await message.channel.send(`${message.author} Please don't use excessive unicode characters.`).catch(() => {});
+      if (warn) setTimeout(() => warn.delete().catch(() => {}), 5000);
+      return;
+    }
+
+    const mentionCount = message.mentions.users.size + message.mentions.roles.size + (message.mentions.everyone ? 1 : 0);
+    if (mentionCount > 5) {
+      await message.delete().catch(() => {});
+      addLog(message.guild.id, 'spam_mentions', message.author.id, client.user.id, `Mass mention (${mentionCount})`);
+      const warn = await message.channel.send(`${message.author} Too many mentions in a message.`).catch(() => {});
+      if (warn) setTimeout(() => warn.delete().catch(() => {}), 5000);
+      return;
+    }
+
+    if (content.length > 15) {
+      const capsCount = (content.match(/[A-Z]/g) || []).length;
+      const letterCount = (content.match(/[A-Za-z]/g) || []).length;
+      if (letterCount > 0 && capsCount / letterCount > 0.7) {
+        await message.delete().catch(() => {});
+        addLog(message.guild.id, 'spam_caps', message.author.id, client.user.id, 'Excessive caps');
+        const warn = await message.channel.send(`${message.author} Please don't use excessive caps.`).catch(() => {});
+        if (warn) setTimeout(() => warn.delete().catch(() => {}), 5000);
+        return;
+      }
+    }
+
+    const emojiCount = (content.match(/<a?:\w+:\d+>/g) || []).length;
+    if (emojiCount > 5) {
+      await message.delete().catch(() => {});
+      addLog(message.guild.id, 'spam_emoji', message.author.id, client.user.id, `Mass emoji (${emojiCount})`);
+      const warn = await message.channel.send(`${message.author} Too many emojis in a message.`).catch(() => {});
+      if (warn) setTimeout(() => warn.delete().catch(() => {}), 5000);
+      return;
+    }
+  }
+
   const prefix = config.prefix || '$';
   if (!message.content.startsWith(prefix)) return;
 
