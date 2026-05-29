@@ -16,7 +16,7 @@ export async function panelCommand(message) {
 
   const embed = new EmbedBuilder()
     .setColor(0x9b59b6)
-    .setTitle('✦ Ticket Center ✦')
+    .setTitle('✦ Syntax Ticket System V1 ✦')
     .setDescription([
       'Welcome to the ticket center!',
       '',
