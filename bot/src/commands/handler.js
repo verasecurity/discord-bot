@@ -15,6 +15,7 @@ import { ticket, add, remove, close } from './ticket.js';
 import { filterCommand } from './filter.js';
 import { panelCommand } from './panel.js';
 import { antiraidCommand } from './antiraid.js';
+import { setavatarCommand } from './setavatar.js';
 import { handleCustomCommand } from './custom.js';
 import { getGuildConfig } from '../db.js';
 
@@ -39,6 +40,7 @@ const builtInCommands = {
   filter: { run: filterCommand, description: 'Manage the word filter', usage: 'filter <add|remove|list|toggle>' },
   panel: { run: panelCommand, description: 'Create the ticket panel', usage: 'panel' },
   antiraid: { run: antiraidCommand, description: 'Toggle anti-raid protection', usage: 'antiraid' },
+  setavatar: { run: setavatarCommand, description: 'Update bot profile picture', usage: 'setavatar' },
   help: { run: helpCommand, description: 'Show this help', usage: 'help [command]' },
   cmds: { run: helpCommand, description: 'List all commands', usage: 'cmds' },
 };
