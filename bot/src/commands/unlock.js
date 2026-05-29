@@ -5,9 +5,7 @@ export async function unlock(message) {
     return message.reply('You need Manage Channels permission.');
   }
 
-  await message.channel.permissionOverwrites.edit(message.guild.id, {
-    SendMessages: null,
-  });
+  await message.channel.permissionOverwrites.delete(message.guild.id).catch(() => {});
 
   const embed = new EmbedBuilder()
     .setColor(0x44ff44)

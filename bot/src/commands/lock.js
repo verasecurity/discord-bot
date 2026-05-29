@@ -5,8 +5,8 @@ export async function lock(message) {
     return message.reply('You need Manage Channels permission.');
   }
 
-  await message.channel.permissionOverwrites.edit(message.guild.id, {
-    SendMessages: false,
+  await message.channel.permissionOverwrites.create(message.guild.id, {
+    Deny: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.AddReactions, PermissionFlagsBits.CreatePublicThreads, PermissionFlagsBits.CreatePrivateThreads],
   });
 
   const embed = new EmbedBuilder()
