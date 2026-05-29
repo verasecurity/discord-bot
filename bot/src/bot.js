@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits, Events, EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } from 'discord.js';
 import { handleCommand } from './commands/handler.js';
-import { ensureGuild, getGuildConfig, getFilteredWords, addLog, createTicket, getOpenTicket } from './db.js';
+import { ensureGuild, getGuildConfig, getFilteredWords, addLog, createTicket, getOpenTicket, closeTicket } from './db.js';
 
 export const client = new Client({
   intents: [
@@ -91,21 +91,36 @@ client.on(Events.MessageCreate, async (message) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isButton()) return;
-  if (!interaction.customId.startsWith('ticket_')) return;
+  if (!interaction.isStringSelectMenu() && !interaction.isButton()) return;
+  if (interaction.isButton() && interaction.customId === 'close_ticket') {
+    const ticketData = getOpenTicket(interaction.guild.id, interaction.channel.id);
+    if (!ticketData) return interaction.reply({ content: 'Not an open ticket.', ephemeral: true });
+    const embed = new EmbedBuilder()
+      .setColor(0xff4444)
+      .setTitle('Ticket Closing')
+      .setDescription('This ticket will be deleted in 10 seconds.')
+      .setTimestamp();
+    await interaction.reply({ embeds: [embed] });
+    closeTicket(interaction.channel.id);
+    addLog(interaction.guild.id, 'ticket_closed', ticketData.creator_id, interaction.user.id, 'Ticket closed');
+    setTimeout(() => interaction.channel.delete().catch(() => {}), 10000);
+    return;
+  }
+  if (!interaction.isStringSelectMenu()) return;
+  if (interaction.customId !== 'ticket_select') return;
   if (!interaction.guild) return;
 
   await interaction.deferReply({ ephemeral: true });
 
   const typeMap = {
-    ticket_general: { label: 'General', color: 0x5865f2 },
-    ticket_support: { label: 'Support', color: 0x2ecc71 },
-    ticket_rewards: { label: 'Rewards', color: 0x9b59b6 },
-    ticket_report: { label: 'Report', color: 0xe74c3c },
-    ticket_general2: { label: 'General', color: 0x3498db },
+    general: { label: 'General', color: 0x5865f2 },
+    support: { label: 'Support', color: 0x2ecc71 },
+    rewards: { label: 'Rewards', color: 0x9b59b6 },
+    report: { label: 'Report', color: 0xe74c3c },
+    general2: { label: 'General', color: 0x3498db },
   };
 
-  const info = typeMap[interaction.customId];
+  const info = typeMap[interaction.values[0]];
   if (!info) return;
 
   const config = getGuildConfig(interaction.guild.id);
