@@ -1,6 +1,6 @@
-import { Client, GatewayIntentBits, Events, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { Client, GatewayIntentBits, Events, EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } from 'discord.js';
 import { handleCommand } from './commands/handler.js';
-import { ensureGuild, getGuildConfig, getFilteredWords, addLog } from './db.js';
+import { ensureGuild, getGuildConfig, getFilteredWords, addLog, createTicket, getOpenTicket } from './db.js';
 
 export const client = new Client({
   intents: [
@@ -88,4 +88,74 @@ client.on(Events.MessageCreate, async (message) => {
   }
 
   await handleCommand(message, commandName, args, prefix);
+});
+
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isButton()) return;
+  if (!interaction.customId.startsWith('ticket_')) return;
+  if (!interaction.guild) return;
+
+  await interaction.deferReply({ ephemeral: true });
+
+  const typeMap = {
+    ticket_general: { label: 'General', color: 0x5865f2 },
+    ticket_support: { label: 'Support', color: 0x2ecc71 },
+    ticket_rewards: { label: 'Rewards', color: 0x9b59b6 },
+    ticket_report: { label: 'Report', color: 0xe74c3c },
+    ticket_general2: { label: 'General', color: 0x3498db },
+  };
+
+  const info = typeMap[interaction.customId];
+  if (!info) return;
+
+  const config = getGuildConfig(interaction.guild.id);
+  const categoryId = config.ticket_category;
+  const channelName = `${info.label.toLowerCase().replace(/[^a-z0-9]/g, '')}-${interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+
+  const existingChannel = interaction.guild.channels.cache.find(
+    c => c.name === channelName && c.type === ChannelType.GuildText
+  );
+  if (existingChannel) {
+    return interaction.editReply({ content: `You already have a ticket: ${existingChannel}` });
+  }
+
+  const category = categoryId ? interaction.guild.channels.cache.get(categoryId) : null;
+
+  const ticketChannel = await interaction.guild.channels.create({
+    name: channelName,
+    type: ChannelType.GuildText,
+    parent: category?.id || null,
+    permissionOverwrites: [
+      { id: interaction.guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+      { id: interaction.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
+      { id: interaction.client.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.ManageChannels] },
+    ],
+  });
+
+  createTicket(interaction.guild.id, ticketChannel.id, interaction.user.id);
+  addLog(interaction.guild.id, 'ticket_created', interaction.user.id, interaction.user.id, `${info.label} ticket created via panel`);
+
+  const embed = new EmbedBuilder()
+    .setColor(info.color)
+    .setTitle(`${info.label} Ticket`)
+    .setDescription(`Ticket created by ${interaction.user}`)
+    .addFields(
+      { name: 'Useful Commands', value: [
+        '`$add @user` — Add someone to this ticket',
+        '`$remove @user` — Remove someone from this ticket',
+        '`$close` — Close this ticket',
+      ].join('\n') }
+    )
+    .setTimestamp();
+
+  const closeRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('close_ticket')
+      .setLabel('Close Ticket')
+      .setEmoji('🔒')
+      .setStyle(ButtonStyle.Danger)
+  );
+
+  await ticketChannel.send({ content: `${interaction.user}`, embeds: [embed], components: [closeRow] });
+  await interaction.editReply({ content: `Ticket created: ${ticketChannel}` });
 });

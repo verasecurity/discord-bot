@@ -13,6 +13,7 @@ import { unlock } from './unlock.js';
 import { slowmode } from './slowmode.js';
 import { ticket, add, remove, close } from './ticket.js';
 import { filterCommand } from './filter.js';
+import { panelCommand } from './panel.js';
 import { handleCustomCommand } from './custom.js';
 import { getGuildConfig } from '../db.js';
 
@@ -35,6 +36,7 @@ const builtInCommands = {
   remove: { run: remove, description: 'Remove a user from ticket', usage: 'remove @user' },
   close: { run: close, description: 'Close the current ticket', usage: 'close' },
   filter: { run: filterCommand, description: 'Manage the word filter', usage: 'filter <add|remove|list|toggle>' },
+  panel: { run: panelCommand, description: 'Create the ticket panel', usage: 'panel' },
   help: { run: helpCommand, description: 'Show this help', usage: 'help [command]' },
   cmds: { run: helpCommand, description: 'List all commands', usage: 'cmds' },
 };

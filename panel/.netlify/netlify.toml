@@ -7,9 +7,10 @@ headers = []
 [functions."*"]
 
 [build]
-publish = "C:\\Users\\user\\Desktop\\Discord Bot\\src"
+publish = "C:\\Users\\user\\Desktop\\Discord Bot\\panel\\src"
 publishOrigin = "config"
 commandOrigin = "config"
+base = "C:\\Users\\user\\Desktop\\Discord Bot\\panel"
 command = "echo 'Static site, no build required'"
 
 [build.environment]
