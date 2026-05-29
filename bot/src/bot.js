@@ -203,6 +203,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     general: { label: 'General', color: 0x5865f2, categoryId: '1509935384539168829' },
     support: { label: 'Support', color: 0x2ecc71, categoryId: '1509935475895570542' },
     rewards: { label: 'Rewards', color: 0x9b59b6, categoryId: '1509935524259958966' },
+    purchase: { label: 'Purchase', color: 0xf39c12, categoryId: '1509954490823086322' },
     report: { label: 'Report', color: 0xe74c3c, categoryId: '1509935570036719686' },
   };
 

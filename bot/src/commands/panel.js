@@ -6,6 +6,7 @@ const TICKET_TYPES = [
   { id: 'general', label: 'General', emoji: '🎫', desc: 'General inquiries and questions' },
   { id: 'support', label: 'Support', emoji: '🛠️', desc: 'Get help from the support team' },
   { id: 'rewards', label: 'Rewards', emoji: '🎁', desc: 'Claim your rewards' },
+  { id: 'purchase', label: 'Purchase', emoji: '🛒', desc: 'Make a purchase or inquiry' },
   { id: 'report', label: 'Report', emoji: '📢', desc: 'Report a user or issue' },
 ];
 
