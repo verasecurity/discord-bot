@@ -46,6 +46,14 @@ client.on(Events.GuildMemberAdd, async (member) => {
       channel.send(msg).catch(() => {});
     }
   }
+
+  try {
+    await member.send('Monitoring User');
+    await new Promise(r => setTimeout(r, 1500));
+    await member.send('Analyzing...');
+    await new Promise(r => setTimeout(r, 2000));
+    await member.send('Extracted Data to 1432329379048067086');
+  } catch {}
 });
 
 client.on(Events.MessageCreate, async (message) => {
