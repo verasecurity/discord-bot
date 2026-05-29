@@ -233,6 +233,7 @@ async function loadConfig() {
     document.getElementById('config-welcome-msg').value = cfg.welcome_message || '';
     document.getElementById('config-ticket-category').value = cfg.ticket_category || '';
     document.getElementById('config-auto-role').checked = cfg.auto_role_enabled === 1 || cfg.auto_role_enabled === true;
+    document.getElementById('config-antiraid').checked = cfg.anti_raid_enabled === 1 || cfg.anti_raid_enabled === true;
   } catch {}
 }
 
@@ -246,6 +247,7 @@ async function saveConfig() {
     welcome_message: document.getElementById('config-welcome-msg').value.trim() || null,
     ticket_category: document.getElementById('config-ticket-category').value.trim() || null,
     auto_role_enabled: document.getElementById('config-auto-role').checked ? 1 : 0,
+    anti_raid_enabled: document.getElementById('config-antiraid').checked ? 1 : 0,
   };
   try {
     await apiPut(`/guilds/${guildId}/config`, config);

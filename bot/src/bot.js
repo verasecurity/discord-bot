@@ -2,6 +2,9 @@ import { Client, GatewayIntentBits, Events, EmbedBuilder, PermissionFlagsBits, A
 import { handleCommand } from './commands/handler.js';
 import { ensureGuild, getGuildConfig, getFilteredWords, addLog, createTicket, getOpenTicket, closeTicket } from './db.js';
 
+const rateLimitMap = new Map();
+const antiRaidPattern = /(?:discord|discordapp)[.\-]?(?:com|gg|app|media|net|me|gift|new|gay|ru)\/?(?:\b|[a-z0-9_\-]|invite\/?)?[a-z0-9_\-]{4,}/i;
+
 export const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -68,6 +71,44 @@ client.on(Events.MessageCreate, async (message) => {
         if (warn) setTimeout(() => warn.delete().catch(() => {}), 5000);
         return;
       }
+    }
+  }
+
+  if (config.anti_raid_enabled && !isMod) {
+    const content = message.content;
+
+    if (antiRaidPattern.test(content)) {
+      await message.delete().catch(() => {});
+      addLog(message.guild.id, 'anti_raid_invite', message.author.id, client.user.id, 'Discord invite link blocked');
+      const warn = await message.channel.send(`${message.author} Discord invite links are not allowed.`).catch(() => {});
+      if (warn) setTimeout(() => warn.delete().catch(() => {}), 5000);
+      return;
+    }
+
+    const key = `${message.guild.id}:${message.author.id}`;
+    const now = Date.now();
+    if (!rateLimitMap.has(key)) {
+      rateLimitMap.set(key, []);
+    }
+    const timestamps = rateLimitMap.get(key).filter(t => now - t < 3000);
+    timestamps.push(now);
+    rateLimitMap.set(key, timestamps);
+
+    if (timestamps.length > 5) {
+      const countKey = `timeout_${key}`;
+      const timeoutCount = (rateLimitMap.get(countKey) || 0) + 1;
+      rateLimitMap.set(countKey, timeoutCount);
+
+      const durations = [600, 7200, 86400];
+      const duration = durations[Math.min(timeoutCount - 1, durations.length - 1)];
+      const until = Math.floor(Date.now() / 1000) + duration;
+
+      await message.member.timeout(duration * 1000, 'Spam detected').catch(() => {});
+      addLog(message.guild.id, 'anti_raid_timeout', message.author.id, client.user.id, `Spam timeout ${duration}s`);
+      const warn = await message.channel.send(`${message.author} You have been timed out for spam.`).catch(() => {});
+      if (warn) setTimeout(() => warn.delete().catch(() => {}), 5000);
+      rateLimitMap.set(key, []);
+      return;
     }
   }
 
