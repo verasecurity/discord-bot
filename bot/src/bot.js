@@ -95,15 +95,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isButton() && interaction.customId === 'close_ticket') {
     const ticketData = getOpenTicket(interaction.guild.id, interaction.channel.id);
     if (!ticketData) return interaction.reply({ content: 'Not an open ticket.', ephemeral: true });
+    const archiveCategory = '1509936066411495594';
     const embed = new EmbedBuilder()
       .setColor(0xff4444)
-      .setTitle('Ticket Closing')
-      .setDescription('This ticket will be deleted in 10 seconds.')
+      .setTitle('Ticket Closed')
+      .setDescription('This ticket has been closed and moved to archives.')
       .setTimestamp();
     await interaction.reply({ embeds: [embed] });
     closeTicket(interaction.channel.id);
     addLog(interaction.guild.id, 'ticket_closed', ticketData.creator_id, interaction.user.id, 'Ticket closed');
-    setTimeout(() => interaction.channel.delete().catch(() => {}), 10000);
+    await interaction.channel.edit({ parent: archiveCategory }).catch(() => {});
+    await interaction.channel.permissionOverwrites.edit(interaction.guild.id, { ViewChannel: false }).catch(() => {});
     return;
   }
   if (!interaction.isStringSelectMenu()) return;
@@ -113,28 +115,25 @@ client.on(Events.InteractionCreate, async (interaction) => {
   await interaction.deferReply({ ephemeral: true });
 
   const typeMap = {
-    general: { label: 'General', color: 0x5865f2 },
-    support: { label: 'Support', color: 0x2ecc71 },
-    rewards: { label: 'Rewards', color: 0x9b59b6 },
-    report: { label: 'Report', color: 0xe74c3c },
-    general2: { label: 'General', color: 0x3498db },
+    general: { label: 'General', color: 0x5865f2, categoryId: '1509935384539168829' },
+    support: { label: 'Support', color: 0x2ecc71, categoryId: '1509935475895570542' },
+    rewards: { label: 'Rewards', color: 0x9b59b6, categoryId: '1509935524259958966' },
+    report: { label: 'Report', color: 0xe74c3c, categoryId: '1509935570036719686' },
   };
 
   const info = typeMap[interaction.values[0]];
   if (!info) return;
 
-  const config = getGuildConfig(interaction.guild.id);
-  const categoryId = config.ticket_category;
   const channelName = `${info.label.toLowerCase().replace(/[^a-z0-9]/g, '')}-${interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
 
   const existingChannel = interaction.guild.channels.cache.find(
     c => c.name === channelName && c.type === ChannelType.GuildText
   );
   if (existingChannel) {
-    return interaction.editReply({ content: `You already have a ticket: ${existingChannel}` });
+    return interaction.editReply({ content: `You already have a ticket: ${existingChannel}`);
   }
 
-  const category = categoryId ? interaction.guild.channels.cache.get(categoryId) : null;
+  const category = interaction.guild.channels.cache.get(info.categoryId);
 
   const ticketChannel = await interaction.guild.channels.create({
     name: channelName,

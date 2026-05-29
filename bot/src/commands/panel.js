@@ -7,7 +7,6 @@ const TICKET_TYPES = [
   { id: 'support', label: 'Support', emoji: '🛠️', desc: 'Get help from the support team' },
   { id: 'rewards', label: 'Rewards', emoji: '🎁', desc: 'Claim your rewards' },
   { id: 'report', label: 'Report', emoji: '📢', desc: 'Report a user or issue' },
-  { id: 'general2', label: 'General', emoji: '💬', desc: 'Other general matters' },
 ];
 
 export async function panelCommand(message) {
